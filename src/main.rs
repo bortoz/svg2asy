@@ -8,7 +8,7 @@ mod svg2asy;
 use std::path::PathBuf;
 use std::{env, fs};
 
-use anyhow::{Context, Result};
+use anyhow::{ensure, Context, Result};
 use clap::{Args, Parser};
 
 use crate::svg2asy::svg2asy;
@@ -40,15 +40,22 @@ fn main() -> Result<()> {
     let options = Options::parse();
 
     let input = fs::canonicalize(options.file).context("Invalid input file")?;
-    let output = options.output.map_or_else(
-        || -> Result<_> {
-            let mut output = env::current_dir().context("Failed to get current directory")?;
-            output.push(input.file_stem().context("Invalid input file")?);
-            output.set_extension("asy");
-            Ok(output)
-        },
-        Ok,
-    )?;
+    let output = if let Some(output) = options.output {
+        if let Some(extension) = output.extension() {
+            ensure!(
+                extension == "asy",
+                "Output file must have \".asy\" extension"
+            );
+            output
+        } else {
+            output.with_extension("asy")
+        }
+    } else {
+        let mut output = env::current_dir().context("Failed to get current directory")?;
+        output.push(input.file_stem().context("Invalid input file")?);
+        output.set_extension("asy");
+        output
+    };
 
     svg2asy(input, output, &options.asy_options)
 }
