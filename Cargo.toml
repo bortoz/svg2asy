@@ -3,6 +3,7 @@ name = "svg2asy"
 version = "0.1.0"
 authors = ["Alessandro Bortolin <bortolin.alessandro@outlook.it>"]
 edition = "2021"
+description = "A simple SVG to Asymptote source code converter"
 license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
