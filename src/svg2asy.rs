@@ -45,9 +45,16 @@ fn transpile_tree(tree: &Tree, mut writer: impl Write, opt: &AsyOptions) -> IoRe
     let NodeKind::Group(group) = &*kind else {
         panic!("root node is not a group");
     };
-    // TODO: tree view box
     transpile!(writer, opt, "{}", (tree.root.clone(), group))?;
-    transpileln!(writer, opt, "add(pic0());")
+    transpileln!(writer, opt, "add(pic0());")?;
+    transpileln!(
+        writer,
+        opt,
+        "draw(scale({}, -{}) * ((0,0) -- (0, 1) -- (1, 1) -- (1, 0) -- cycle), invisible + linewidth(0));",
+        tree.view_box.rect.width(),
+        tree.view_box.rect.height()
+    )?;
+    Ok(())
 }
 
 pub fn svg2asy(
