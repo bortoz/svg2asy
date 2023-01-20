@@ -9,7 +9,7 @@ use std::path::PathBuf;
 use std::{env, fs};
 
 use anyhow::{Context, Result};
-use clap::Parser;
+use clap::{Args, Parser};
 
 use crate::svg2asy::svg2asy;
 
@@ -20,6 +20,20 @@ struct Options {
 
     #[arg(short, long, value_name = "FILE")]
     output: Option<PathBuf>,
+
+    #[command(flatten)]
+    asy_options: AsyOptions,
+}
+
+#[derive(Args)]
+pub struct AsyOptions {
+    #[arg(
+        short,
+        long,
+        default_value = "6",
+        help = "Number of decimal places for floating point numbers"
+    )]
+    pub precision: u32,
 }
 
 fn main() -> Result<()> {
@@ -36,5 +50,5 @@ fn main() -> Result<()> {
         Ok,
     )?;
 
-    svg2asy(input, output)
+    svg2asy(input, output, &options.asy_options)
 }

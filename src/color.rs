@@ -3,9 +3,10 @@ use std::fmt::{Formatter, Result as FmtResult};
 use usvg::Color;
 
 use crate::asy::Asy;
+use crate::AsyOptions;
 
 impl Asy for Color {
-    fn transpile(&self, fmt: &mut Formatter<'_>) -> FmtResult {
+    fn transpile(&self, fmt: &mut Formatter<'_>, _opt: &AsyOptions) -> FmtResult {
         match (self.red, self.green, self.blue) {
             (255, 192, 192) => write!(fmt, "palered"),
             (255, 128, 128) => write!(fmt, "lightred"),

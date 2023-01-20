@@ -3,16 +3,17 @@ use std::fmt::{Formatter, Result as FmtResult};
 use usvg::{FuzzyEq, Group, IsDefault, Node, NodeKind, Transform};
 
 use crate::asy::{transpile, transpileln, Asy};
+use crate::AsyOptions;
 
 impl Asy for Transform {
-    fn transpile(&self, fmt: &mut Formatter<'_>) -> FmtResult {
+    fn transpile(&self, fmt: &mut Formatter<'_>, opt: &AsyOptions) -> FmtResult {
         let Transform { a, b, c, d, e, f } = &self;
-        transpile!(fmt, "({}, {}, {}, {}, {}, {})", e, f, a, b, c, d)
+        transpile!(fmt, opt, "({}, {}, {}, {}, {}, {})", e, f, a, b, c, d)
     }
 }
 
 impl Asy for (Node, &Group) {
-    fn transpile(&self, fmt: &mut Formatter<'_>) -> FmtResult {
+    fn transpile(&self, fmt: &mut Formatter<'_>, opt: &AsyOptions) -> FmtResult {
         let Group {
             id,
             transform,
@@ -56,20 +57,20 @@ impl Asy for (Node, &Group) {
 
         for child in self.0.children() {
             if let NodeKind::Group(group) = &*child.borrow() {
-                transpile!(fmt, "{}", (child.clone(), group))?;
+                transpile!(fmt, opt, "{}", (child.clone(), group))?;
             }
         }
 
-        transpileln!(fmt, "picture pic{}() {{", id)?;
-        transpileln!(fmt, "\tpicture pic;")?;
+        transpileln!(fmt, opt, "picture pic{}() {{", id)?;
+        transpileln!(fmt, opt, "\tpicture pic;")?;
 
         for child in self.0.children() {
             match &*child.borrow() {
                 NodeKind::Group(group) => {
-                    transpileln!(fmt, "\tadd(pic, pic{}());", group.id)?;
+                    transpileln!(fmt, opt, "\tadd(pic, pic{}());", group.id)?;
                 }
                 NodeKind::Path(path) => {
-                    transpile!(fmt, "{}", path)?;
+                    transpile!(fmt, opt, "{}", path)?;
                 }
                 NodeKind::Image(_) => eprintln!("Warning: images are not supported"),
                 NodeKind::Text(_) => eprintln!("Warning: text is not supported"),
@@ -77,12 +78,12 @@ impl Asy for (Node, &Group) {
         }
 
         if transform.is_default() {
-            transpileln!(fmt, "\treturn pic;")?;
-            transpileln!(fmt, "}}")?;
+            transpileln!(fmt, opt, "\treturn pic;")?;
+            transpileln!(fmt, opt, "}}")?;
         } else {
-            transpileln!(fmt, "\ttransform t = {};", transform)?;
-            transpileln!(fmt, "\treturn t * pic;")?;
-            transpileln!(fmt, "}}")?;
+            transpileln!(fmt, opt, "\ttransform t = {};", transform)?;
+            transpileln!(fmt, opt, "\treturn t * pic;")?;
+            transpileln!(fmt, opt, "}}")?;
         }
         Ok(())
     }

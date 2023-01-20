@@ -7,6 +7,7 @@ use rctree::NodeEdge;
 use usvg::{Node, NodeKind, Options, Tree};
 
 use crate::asy::{transpile, transpileln};
+use crate::AsyOptions;
 
 fn generate_ids(root: &Node, mut id: usize) -> usize {
     for node in root.traverse() {
@@ -39,17 +40,21 @@ fn generate_ids(root: &Node, mut id: usize) -> usize {
     id
 }
 
-fn transpile_tree(tree: &Tree, mut writer: impl Write) -> IoResult<()> {
+fn transpile_tree(tree: &Tree, mut writer: impl Write, opt: &AsyOptions) -> IoResult<()> {
     let kind = tree.root.borrow();
     let NodeKind::Group(group) = &*kind else {
         panic!("root node is not a group");
     };
     // TODO: tree view box
-    transpile!(writer, "{}", (tree.root.clone(), group))?;
-    transpileln!(writer, "add(pic0());")
+    transpile!(writer, opt, "{}", (tree.root.clone(), group))?;
+    transpileln!(writer, opt, "add(pic0());")
 }
 
-pub fn svg2asy(input: impl AsRef<Path>, output: impl AsRef<Path>) -> Result<()> {
+pub fn svg2asy(
+    input: impl AsRef<Path>,
+    output: impl AsRef<Path>,
+    option: &AsyOptions,
+) -> Result<()> {
     let options = Options::default();
     let data = read(input).context("Cannot read input file")?;
     let tree = Tree::from_data(data.as_slice(), &options).context("Invalid SVG file")?;
@@ -58,7 +63,7 @@ pub fn svg2asy(input: impl AsRef<Path>, output: impl AsRef<Path>) -> Result<()> 
     let mut writer = BufWriter::new(f);
 
     generate_ids(&tree.root, 0);
-    transpile_tree(&tree, &mut writer).context("Failed to write asy code")?;
+    transpile_tree(&tree, &mut writer, &option).context("Failed to write asy code")?;
 
     Ok(())
 }

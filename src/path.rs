@@ -3,12 +3,13 @@ use std::fmt::{Formatter, Result as FmtResult};
 use usvg::{IsDefault, PaintOrder, Path, PathSegment};
 
 use crate::asy::{transpile, transpileln, Asy};
+use crate::AsyOptions;
 
 impl Asy for PathSegment {
-    fn transpile(&self, fmt: &mut Formatter<'_>) -> FmtResult {
+    fn transpile(&self, fmt: &mut Formatter<'_>, opt: &AsyOptions) -> FmtResult {
         match &self {
             PathSegment::LineTo { x, y } => {
-                transpile!(fmt, " -- ({}, {})", x, y)
+                transpile!(fmt, opt, " -- ({}, {})", x, y)
             }
             PathSegment::CurveTo {
                 x1,
@@ -18,18 +19,18 @@ impl Asy for PathSegment {
                 x,
                 y,
             } => {
-                transpile!(fmt, " .. controls ({}, {})", x1, y1)?;
-                transpile!(fmt, "and ({}, {})", x2, y2)?;
-                transpile!(fmt, " .. ({}, {})", x, y)
+                transpile!(fmt, opt, " .. controls ({}, {})", x1, y1)?;
+                transpile!(fmt, opt, "and ({}, {})", x2, y2)?;
+                transpile!(fmt, opt, " .. ({}, {})", x, y)
             }
-            PathSegment::ClosePath => transpile!(fmt, " -- cycle"),
+            PathSegment::ClosePath => transpile!(fmt, opt, " -- cycle"),
             PathSegment::MoveTo { .. } => panic!("cannot transpile MoveTo"),
         }
     }
 }
 
 impl Asy for Path {
-    fn transpile(&self, fmt: &mut Formatter<'_>) -> FmtResult {
+    fn transpile(&self, fmt: &mut Formatter<'_>, opt: &AsyOptions) -> FmtResult {
         let Path {
             id,
             transform,
@@ -75,41 +76,42 @@ impl Asy for Path {
             let (initial_point, path) = &paths[0];
             transpile!(
                 fmt,
+                opt,
                 "\tpath p{} = ({}, {})",
                 id,
                 initial_point.0,
                 initial_point.1
             )?;
             for segment in path {
-                transpile!(fmt, "{}", segment)?;
+                transpile!(fmt, opt, "{}", segment)?;
             }
-            transpileln!(fmt, ";")?;
+            transpileln!(fmt, opt, ";")?;
         } else {
-            transpileln!(fmt, "\tpath[] p{} = {{", id)?;
+            transpileln!(fmt, opt, "\tpath[] p{} = {{", id)?;
             for (initial_point, path) in paths {
-                transpile!(fmt, "\t\t({}, {})", initial_point.0, initial_point.1)?;
+                transpile!(fmt, opt, "\t\t({}, {})", initial_point.0, initial_point.1)?;
                 for segment in path {
-                    segment.transpile(fmt)?;
+                    transpile!(fmt, opt, "{}", segment)?;
                 }
-                transpileln!(fmt, ",")?;
+                transpileln!(fmt, opt, ",")?;
             }
-            transpileln!(fmt, "\t}};")?;
+            transpileln!(fmt, opt, "\t}};")?;
         }
 
         if !transform.is_default() {
-            transpileln!(fmt, "\ttransform t{} = {};", id, transform)?;
+            transpileln!(fmt, opt, "\ttransform t{} = {};", id, transform)?;
         }
 
         macro_rules! paint {
             ($method:literal, $($pen:expr),+) => {
                 if $( $pen.is_some() ) && + {
                     if transform.is_default() {
-                        transpile!(fmt, "\t{}(pic, p{}", $method, id)?;
+                        transpile!(fmt, opt, "\t{}(pic, p{}", $method, id)?;
                     } else {
-                        transpile!(fmt, "\t{}(pic, t{} * p{}", $method, id, id)?;
+                        transpile!(fmt, opt, "\t{}(pic, t{} * p{}", $method, id, id)?;
                     }
-                    $( transpile!(fmt, ", {}", $pen.as_ref().unwrap())?; )+
-                    transpileln!(fmt, ");")?;
+                    $( transpile!(fmt, opt, ", {}", $pen.as_ref().unwrap())?; )+
+                    transpileln!(fmt, opt, ");")?;
                 }
             };
         }
