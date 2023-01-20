@@ -1,0 +1,15 @@
+[package]
+name = "svg2asy"
+version = "0.1.0"
+authors = ["Alessandro Bortolin <bortolin.alessandro@outlook.it>"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0"
+clap = { version = "4.1", features = ["derive"] }
+paste = "1.0"
+rctree = "0.5"
+rust_decimal = "1.27"
+usvg = "0.28"
