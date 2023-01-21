@@ -20,7 +20,7 @@ impl Asy for PathSegment {
                 y,
             } => {
                 transpile!(fmt, opt, " .. controls ({}, {})", x1, y1)?;
-                transpile!(fmt, opt, "and ({}, {})", x2, y2)?;
+                transpile!(fmt, opt, " and ({}, {})", x2, y2)?;
                 transpile!(fmt, opt, " .. ({}, {})", x, y)
             }
             PathSegment::ClosePath => transpile!(fmt, opt, " -- cycle"),
