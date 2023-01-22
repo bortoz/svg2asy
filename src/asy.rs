@@ -17,50 +17,41 @@ impl<T: Asy> Asy for &T {
 }
 
 macro_rules! impl_asy_float {
-    ($t:ty) => {
-        paste! {
+    ($( $t:ty ),+) => {
+        $(
             impl Asy for $t {
                 fn transpile(&self, fmt: &mut Formatter<'_>, opt: &AsyOptions) -> FmtResult {
-                    let dec = Decimal::[<from_ $t _retain>](*self)
-                        .unwrap()
-                        .round_dp(opt.precision)
-                        .round_sf(opt.precision)
-                        .unwrap()
-                        .normalize();
-                    write!(fmt, "{}", dec)
+                    assert!(self.is_finite(), "value is not finite");
+                    let dec = paste! { Decimal::[<from_ $t _retain>](*self) }
+                        .and_then(|d| d.round_dp(opt.precision).round_sf(opt.precision));
+                    if let Some(dec) = dec {
+                        write!(fmt, "{}", dec.normalize())
+                    } else {
+                        write!(fmt, "{:.*e}", opt.precision as usize, self)
+                    }
                 }
             }
-        }
+        )+
     };
 }
 
-impl_asy_float!(f32);
-impl_asy_float!(f64);
+impl_asy_float!(f32, f64);
 
 macro_rules! impl_asy_display {
-    ($t:ty) => {
-        impl Asy for $t {
-            fn transpile(&self, w: &mut Formatter<'_>, _opt: &AsyOptions) -> FmtResult {
-                write!(w, "{}", self)
+    ($( $t:ty ),+) => {
+        $(
+            impl Asy for $t {
+                fn transpile(&self, w: &mut Formatter<'_>, _opt: &AsyOptions) -> FmtResult {
+                    write!(w, "{}", self)
+                }
             }
-        }
+        )+
     };
 }
 
-impl_asy_display!(u8);
-impl_asy_display!(u16);
-impl_asy_display!(u32);
-impl_asy_display!(u64);
-impl_asy_display!(usize);
-impl_asy_display!(i8);
-impl_asy_display!(i16);
-impl_asy_display!(i32);
-impl_asy_display!(i64);
-impl_asy_display!(isize);
-impl_asy_display!(bool);
-impl_asy_display!(char);
-impl_asy_display!(&str);
-impl_asy_display!(String);
+impl_asy_display!(u8, u16, u32, u64, u128, usize);
+impl_asy_display!(i8, i16, i32, i64, i128, isize);
+impl_asy_display!(char, &str, String);
 
 pub(crate) struct AsyWrapper<'a, T>(pub(crate) &'a T, pub(crate) &'a AsyOptions);
 
