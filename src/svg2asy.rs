@@ -14,8 +14,7 @@ fn generate_ids(root: &Node, mut id: usize) -> usize {
         let NodeEdge::Start(node) = node else {
             continue;
         };
-        let mut kind = node.borrow_mut();
-        match &mut *kind {
+        match *node.borrow_mut() {
             NodeKind::Group(ref mut group) => {
                 if let Some(clip) = &group.clip_path {
                     id = generate_ids(&clip.root, id);
@@ -41,11 +40,10 @@ fn generate_ids(root: &Node, mut id: usize) -> usize {
 }
 
 fn transpile_tree(tree: &Tree, mut writer: impl Write, opt: &AsyOptions) -> IoResult<()> {
-    let kind = tree.root.borrow();
-    let NodeKind::Group(group) = &*kind else {
+    let NodeKind::Group(group) = &*tree.root.borrow() else {
         panic!("root node is not a group");
     };
-    transpile!(writer, opt, "{}", (tree.root.clone(), group))?;
+    transpile!(writer, opt, "{}", (&tree.root, group))?;
     transpileln!(writer, opt, "add(pic0());")?;
     transpileln!(
         writer,

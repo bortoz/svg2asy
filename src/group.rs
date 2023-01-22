@@ -12,7 +12,7 @@ impl Asy for Transform {
     }
 }
 
-impl Asy for (Node, &Group) {
+impl Asy for (&Node, &Group) {
     fn transpile(&self, fmt: &mut Formatter<'_>, opt: &AsyOptions) -> FmtResult {
         let Group {
             id,
@@ -57,7 +57,7 @@ impl Asy for (Node, &Group) {
 
         for child in self.0.children() {
             if let NodeKind::Group(group) = &*child.borrow() {
-                transpile!(fmt, opt, "{}", (child.clone(), group))?;
+                transpile!(fmt, opt, "{}", (&child, group))?;
             }
         }
 
